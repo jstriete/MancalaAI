@@ -46,6 +46,56 @@ def drawText(xoffset, yoffset, text):
     textRect.center = (board_pos.x + .5 * length + xoffset, board_pos.y + .5 * length + yoffset)
     screen.blit(text, textRect)
 
+def moveMarbles(marbles):
+    global extra_turn
+    global turn
+    global mouse_active
+    
+    if space_marbles[i] != 0 and i < scoreSpace and i > scoreSpace - 7:
+        extra_turn = False
+        marbles = space_marbles[i]
+        space_marbles[i] = 0
+        for j in range(marbles):
+            if (turn):
+                if ((i + j + 1) % 14 != scoreSpace + 7):
+                    space_marbles[(i + j + 1) % 14] += 1
+                    if (j == marbles - 1 and (i+j+1) % 14 < scoreSpace):
+                        space_marbles[scoreSpace] += space_marbles[12 - ((i + j + 1) % 14)] + 1
+                        space_marbles[12 - ((i + j + 1) % 14)] = 0
+                        space_marbles[(i + j + 1) % 14] = 0
+                else:
+                    space_marbles[(i + j + 2) % 14] += 1
+            else:
+                if ((i + j + 1) % 14 != scoreSpace - 7):
+                    space_marbles[(i + j + 1) % 14] += 1
+                    if (j == marbles - 1 and (i+j+1) % 14 < scoreSpace):
+                        space_marbles[scoreSpace] += space_marbles[12 - ((i + j + 1) % 14)] + 1
+                        space_marbles[12 - ((i + j + 1) % 14)] = 0
+                        space_marbles[(i + j + 1) % 14] = 0
+                else:
+                    space_marbles[(i + j + 2) % 14] += 1
+        if (i + j + 1) % 14 == scoreSpace:
+            turn = turn
+            extra_turn = True
+        elif (i + j + 1) % 14 != scoreSpace:
+            turn = not turn
+        mouse_active = True
+    else:
+        mouse_active = True
+
+def testWinCondition():
+    global won
+    
+    if sum(space_marbles[0:6]) == 0 and won == False:
+        space_marbles[13] += sum(space_marbles[7:13])
+        for i in range(7, 13):
+            space_marbles[i] = 0
+        won = True
+    elif sum(space_marbles[7:13]) == 0 and won == False:
+        space_marbles[6] += sum(space_marbles[0:6])
+        for i in range(0, 6):
+            space_marbles[i] = 0
+        won = True
 while running:
     while(not decided):
         screen.fill("white")
@@ -107,39 +157,8 @@ while running:
         mouse_active = False
         for i in range(14):
             if(space_locs[i].collidepoint(pos)):
-                if space_marbles[i] != 0 and i < scoreSpace and i > scoreSpace - 7:
-                    extra_turn = False
-                    marbles = space_marbles[i]
-                    space_marbles[i] = 0
-                    for j in range(marbles):
-                        if((i + j + 1) % 14 != scoreSpace + 7):
-                            space_marbles[(i + j + 1) % 14] += 1
-                            if(j == marbles - 1 and (i+j+1) % 14 < scoreSpace and (i+j+1) % 14 > scoreSpace - 7 and space_marbles[(i + j + 1) % 14] == 1 and space_marbles[12 - ((i + j + 1) % 14)] != 0):
-                                space_marbles[scoreSpace] += space_marbles[12 - ((i + j + 1) % 14)] + 1
-                                space_marbles[12 - ((i + j + 1) % 14)] = 0
-                                space_marbles[(i + j + 1) % 14] = 0
-                        else:
-                            space_marbles[(i + j + 2) % 14] += 1
-                    if (i + j + 1) % 14 == scoreSpace:
-                        turn = turn
-                        extra_turn = True
-                    elif (i + j + 1) % 14 != scoreSpace:
-                        turn = not turn
-                    mouse_active = True
-                    break
-                else:
-                    mouse_active = True
-                    break
-    if space_marbles[0] == 0 and space_marbles[1] == 0 and space_marbles[2] == 0 and space_marbles[3] == 0 and space_marbles[4] == 0 and space_marbles[5] == 0 and won == False:
-        space_marbles[13] += space_marbles[7] + space_marbles[8] + space_marbles[9] + space_marbles[10] + space_marbles[11] + space_marbles[12]
-        for i in range(7, 13):
-            space_marbles[i] = 0
-        won = True
-    elif space_marbles[7] == 0 and space_marbles[8] == 0 and space_marbles[9] == 0 and space_marbles[10] == 0 and space_marbles[11] == 0 and space_marbles[12] == 0 and won == False:
-        space_marbles[6] += space_marbles[0] + space_marbles[1] + space_marbles[2] + space_marbles[3] + space_marbles[4] + space_marbles[5]
-        for i in range(0, 6):
-            space_marbles[i] = 0
-        won = True
+                moveMarbles(i)
+    testWinCondition()
     if won:
         if space_marbles[6] > space_marbles[13]:
             drawText(-250, 0, "Player 1 wins!")

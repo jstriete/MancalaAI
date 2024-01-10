@@ -1,5 +1,6 @@
 import pygame
 import random
+import copy
 
 # pygame setup
 pygame.init()
@@ -13,6 +14,7 @@ mouse_active = True
 extra_turn = False
 ai_player = False
 decided = False
+scoreSpace = 6
 
 font = pygame.font.Font('freesansbold.ttf', 32)
 
@@ -46,34 +48,35 @@ def drawText(xoffset, yoffset, text):
     textRect.center = (board_pos.x + .5 * length + xoffset, board_pos.y + .5 * length + yoffset)
     screen.blit(text, textRect)
 
-def moveMarbles(marbles):
+def moveMarbles(moved_marbles, i):
     global extra_turn
     global turn
     global mouse_active
+    global marbles
     
-    if space_marbles[i] != 0 and i < scoreSpace and i > scoreSpace - 7:
+    if moved_marbles[i] != 0 and i < scoreSpace and i > scoreSpace - 7:
         extra_turn = False
-        marbles = space_marbles[i]
-        space_marbles[i] = 0
+        marbles = moved_marbles[i]
+        moved_marbles[i] = 0
         for j in range(marbles):
             if (turn):
                 if ((i + j + 1) % 14 != scoreSpace + 7):
-                    space_marbles[(i + j + 1) % 14] += 1
-                    if (j == marbles - 1 and (i+j+1) % 14 < scoreSpace):
-                        space_marbles[scoreSpace] += space_marbles[12 - ((i + j + 1) % 14)] + 1
-                        space_marbles[12 - ((i + j + 1) % 14)] = 0
-                        space_marbles[(i + j + 1) % 14] = 0
+                    moved_marbles[(i + j + 1) % 14] += 1
+                    if (j == marbles - 1 and (i+j+1) % 14 < scoreSpace and (1+j+1) % scoreSpace - 7 and space_marbles[(1+i+j) % 14] == 1 and space_marbles[12 - ((i+j+1) % 14)] != 0):
+                        moved_marbles[scoreSpace] += moved_marbles[12 - ((i + j + 1) % 14)] + 1
+                        moved_marbles[12 - ((i + j + 1) % 14)] = 0
+                        moved_marbles[(i + j + 1) % 14] = 0
                 else:
-                    space_marbles[(i + j + 2) % 14] += 1
+                    moved_marbles[(i + j + 2) % 14] += 1
             else:
                 if ((i + j + 1) % 14 != scoreSpace - 7):
-                    space_marbles[(i + j + 1) % 14] += 1
-                    if (j == marbles - 1 and (i+j+1) % 14 < scoreSpace):
-                        space_marbles[scoreSpace] += space_marbles[12 - ((i + j + 1) % 14)] + 1
-                        space_marbles[12 - ((i + j + 1) % 14)] = 0
-                        space_marbles[(i + j + 1) % 14] = 0
+                    moved_marbles[(i + j + 1) % 14] += 1
+                    if (j == marbles - 1 and (i+j+1) % 14 < scoreSpace and (1+j+1) % scoreSpace - 7 and space_marbles[(1+i+j) % 14] == 1 and space_marbles[12 - ((i+j+1) % 14)] != 0):
+                        moved_marbles[scoreSpace] += moved_marbles[12 - ((i + j + 1) % 14)] + 1
+                        moved_marbles[12 - ((i + j + 1) % 14)] = 0
+                        moved_marbles[(i + j + 1) % 14] = 0
                 else:
-                    space_marbles[(i + j + 2) % 14] += 1
+                    moved_marbles[(i + j + 2) % 14] += 1
         if (i + j + 1) % 14 == scoreSpace:
             turn = turn
             extra_turn = True
@@ -82,20 +85,110 @@ def moveMarbles(marbles):
         mouse_active = True
     else:
         mouse_active = True
+    return moved_marbles
 
-def testWinCondition():
+def testWinCondition(moved_marbles):
+    isWon = False
     global won
-    
-    if sum(space_marbles[0:6]) == 0 and won == False:
-        space_marbles[13] += sum(space_marbles[7:13])
+        
+    if sum(moved_marbles[0:6]) == 0 and won == False:
+        moved_marbles[13] += sum(moved_marbles[7:13])
         for i in range(7, 13):
-            space_marbles[i] = 0
-        won = True
-    elif sum(space_marbles[7:13]) == 0 and won == False:
-        space_marbles[6] += sum(space_marbles[0:6])
+            moved_marbles[i] = 0
+        isWon = True
+    elif sum(moved_marbles[7:13]) == 0 and won == False:
+        moved_marbles[6] += sum(moved_marbles[0:6])
         for i in range(0, 6):
-            space_marbles[i] = 0
-        won = True
+            moved_marbles[i] = 0
+        isWon = True
+    
+    return isWon
+        
+# def miniMax(depth, marble_list, whoseTurn, moveMade):
+#     global extra_turn
+    
+#     if (depth <= 0 or testWinCondition(marble_list)):
+#         return [marble_list[13] - marble_list[6], moveMade]
+
+#     if (whoseTurn):
+#         best = [-10000, -1]
+#         for i in range(7, 13):
+#             if (marble_list[i] != 0):
+#                 temp_list = copy.deepcopy(marble_list)
+#                 temp_list = moveMarbles(temp_list, i)
+                
+#                 if extra_turn:
+#                     points = miniMax(depth, temp_list, True, i)[0]
+#                 else:
+#                     points = miniMax(depth - 1, temp_list, False, i)[0]
+                
+#                 if (points > best[0]):
+#                     best = [points, i]
+    
+#     if not whoseTurn:
+#         best = [-10000, -1]
+#         for i in range(1, 6):
+#             if (marble_list[i] != 0):
+#                 temp_list = copy.deepcopy(marble_list)
+#                 temp_list = moveMarbles(temp_list, i)
+                
+#                 if extra_turn:
+#                     points = miniMax(depth, temp_list, False, i)[0]
+#                 else:
+#                     points = miniMax(depth - 1, temp_list, True, i)[0]
+                
+#                 if (points < best[0]):
+#                     best = [points, i]
+#     print(best)
+#     return best
+
+def validMoves(board):
+    valid_moves = []
+    for i in range(13):
+        if board[i] != 0:
+            valid_moves.append(i)
+    return valid_moves          
+
+def miniMax(depth, board, maximizing_player):
+    if depth == 0 or testWinCondition(board):
+        return board[13] - board[6], None
+
+    if maximizing_player:
+        max_eval = float('-inf')
+        best_move = None
+
+        for move in validMoves(board):
+            temp_board = copy.deepcopy(board)
+            new_board = moveMarbles(temp_board, move)
+            eval = miniMax(depth - 1, new_board, False)[0]
+
+            if eval > max_eval:
+                max_eval = eval
+                best_move = move
+
+        return max_eval, best_move
+
+    else:
+        min_eval = float('inf')
+        best_move = None
+
+        for move in validMoves(board):
+            temp_board = copy.deepcopy(board)
+            new_board = moveMarbles(temp_board, move)
+            eval = miniMax(depth - 1, new_board, True)[0]
+
+            if eval < min_eval:
+                min_eval = eval
+                best_move = move
+
+        return min_eval, best_move
+
+# Example usage:
+initial_board = [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0]
+result = miniMax(3, initial_board, True)
+print("Best move:", result[1])  
+        
+        
 while running:
     while(not decided):
         screen.fill("white")
@@ -150,15 +243,22 @@ while running:
         if extra_turn:
             drawText(-250, 100, "Extra Turn!")
 
+    if ai_player == True and turn == False:
+        mouse_active = False
+        newBest = miniMax(1, space_marbles, True)
+        print(newBest[1])
+        space_marbles = moveMarbles(space_marbles, newBest[1])
+        if (not extra_turn):
+            turn = True
+            mouse_active = True
+
     if event.type == pygame.MOUSEBUTTONDOWN and mouse_active and won == False:
         pos = pygame.mouse.get_pos()
-        if ai_player == True and turn == False:
-            pos = (0,0)
         mouse_active = False
         for i in range(14):
             if(space_locs[i].collidepoint(pos)):
-                moveMarbles(i)
-    testWinCondition()
+                space_marbles = moveMarbles(space_marbles, i)
+    won = testWinCondition(space_marbles)
     if won:
         if space_marbles[6] > space_marbles[13]:
             drawText(-250, 0, "Player 1 wins!")

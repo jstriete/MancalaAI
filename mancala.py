@@ -104,44 +104,6 @@ def testWinCondition(moved_marbles):
     
     return isWon
         
-# def miniMax(depth, marble_list, whoseTurn, moveMade):
-#     global extra_turn
-    
-#     if (depth <= 0 or testWinCondition(marble_list)):
-#         return [marble_list[13] - marble_list[6], moveMade]
-
-#     if (whoseTurn):
-#         best = [-10000, -1]
-#         for i in range(7, 13):
-#             if (marble_list[i] != 0):
-#                 temp_list = copy.deepcopy(marble_list)
-#                 temp_list = moveMarbles(temp_list, i)
-                
-#                 if extra_turn:
-#                     points = miniMax(depth, temp_list, True, i)[0]
-#                 else:
-#                     points = miniMax(depth - 1, temp_list, False, i)[0]
-                
-#                 if (points > best[0]):
-#                     best = [points, i]
-    
-#     if not whoseTurn:
-#         best = [-10000, -1]
-#         for i in range(1, 6):
-#             if (marble_list[i] != 0):
-#                 temp_list = copy.deepcopy(marble_list)
-#                 temp_list = moveMarbles(temp_list, i)
-                
-#                 if extra_turn:
-#                     points = miniMax(depth, temp_list, False, i)[0]
-#                 else:
-#                     points = miniMax(depth - 1, temp_list, True, i)[0]
-                
-#                 if (points < best[0]):
-#                     best = [points, i]
-#     print(best)
-#     return best
-
 def validMoves(board):
     valid_moves = []
     for i in range(13):
@@ -150,7 +112,7 @@ def validMoves(board):
     return valid_moves          
 
 def miniMax(depth, board, maximizing_player):
-    if depth == 0 or testWinCondition(board):
+    if depth <= 0 or testWinCondition(board):
         return board[13] - board[6], None
 
     if maximizing_player:
@@ -158,9 +120,12 @@ def miniMax(depth, board, maximizing_player):
         best_move = None
 
         for move in validMoves(board):
-            temp_board = copy.deepcopy(board)
-            new_board = moveMarbles(temp_board, move)
-            eval = miniMax(depth - 1, new_board, False)[0]
+            ai_temp_board = copy.deepcopy(board)
+            ai_new_board = moveMarbles(ai_temp_board, move)
+            if (not turn):
+                eval = miniMax(depth - 1, ai_new_board, True)[0]
+            else:
+                eval = miniMax(depth - 1, ai_new_board, False)[0]
 
             if eval > max_eval:
                 max_eval = eval
@@ -171,11 +136,17 @@ def miniMax(depth, board, maximizing_player):
     else:
         min_eval = float('inf')
         best_move = None
-
+        # print("Valid moves:")
+        # print(validMoves(board))
         for move in validMoves(board):
-            temp_board = copy.deepcopy(board)
-            new_board = moveMarbles(temp_board, move)
-            eval = miniMax(depth - 1, new_board, True)[0]
+            player_temp_board = copy.deepcopy(board)
+            player_new_board = moveMarbles(player_temp_board, move)
+            if (move == 0):
+                print(player_new_board)
+            if (extra_turn):
+                eval = miniMax(depth - 1, player_new_board, False)[0]
+            else:
+                eval = miniMax(depth - 1, player_new_board, True)[0]
 
             if eval < min_eval:
                 min_eval = eval
@@ -245,13 +216,16 @@ while running:
 
     if ai_player == True and turn == False:
         mouse_active = False
-        newBest = miniMax(1, space_marbles, True)
+        print("-------------------------------------------------------------------------------------")
+        newBest = miniMax(3, space_marbles, True)
         print(newBest[1])
         space_marbles = moveMarbles(space_marbles, newBest[1])
         if (not extra_turn):
             turn = True
             mouse_active = True
-
+        if (extra_turn):
+            turn = False
+            mouse_active = False
     if event.type == pygame.MOUSEBUTTONDOWN and mouse_active and won == False:
         pos = pygame.mouse.get_pos()
         mouse_active = False

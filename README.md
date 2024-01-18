@@ -1,2 +1,2 @@
 # MancalaAI
-My first attempt at a neural network that plays mancala
+Minimax algorithm to play mancala
